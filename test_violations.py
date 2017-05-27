@@ -1,12 +1,12 @@
 import unittest
-import sys
+from datetime import date
 from violations import get_violations
 
 class TestViolations(unittest.TestCase):
     def test_get_violations(self):
-        smonth, sday, syear = 1,1,2017
-        emonth, eday, eyear = 1,3,2017
-        response = get_violations(smonth, sday, syear, emonth, eday, eyear)
+        date_start = date(year=2017,month=1,day=1)
+        date_end = date(year=2017, month=1, day=3)
+        response = get_violations(date_start, date_end)
         self.assertEqual(len(response), 18)
 
 if __name__ == '__main__':

@@ -1,12 +1,25 @@
+"""
+This module downloads the prior days health inspection violations and posts the name of the restaraunt and
+a link for more details to twitter.
+
+Todo:
+    Add tweet functions via tweepy.
+"""
+
 from bs4 import BeautifulSoup
 from datetime import date, timedelta, datetime
 import requests
 
-def get_violations(smonth, sday, syear, emonth, eday, eyear):
+def get_violations(start_date, end_date):
     """
-    Takes integers of start: month, day, year AND end: month, day, year
-    and returns a list of violations for the period.
+    Args:
+        start_date  (date): Start day to define period to search for violations.
+        end_date    (date): End day to define period to search for violations.
+
+    Returns:
+        list:   A list of dictionary objects representing the violatations for the period.
     """
+
     more_results = True
     page_start = 1 #The API starts at one and returns 4 items per page.
     return_violations = []
@@ -15,7 +28,9 @@ def get_violations(smonth, sday, syear, emonth, eday, eyear):
     while more_results == True and loop_counter < 10:
         loop_counter += 1
         #using the params as posted data was not working
-        url = "http://wake-nc.healthinspections.us/reports.cfm?start={start}&f=search&strSearch1=&relevance1=fName&strSearch2=&relevance2=fName&strSearch3=&relevance3=fName&lscore=&hscore=&ftype=Any&fzipcode=Any&rcritical=Any&sMonth={smonth}&sDay={sday}&sYear={syear}&eMonth={emonth}&eDay={eday}&eYear={eyear}&func=Search".format(start=page_start,smonth=smonth,sday=sday,syear=syear,emonth=emonth,eday=eday,eyear=eyear)
+        url = "http://wake-nc.healthinspections.us/reports.cfm?start={start}&f=search&strSearch1=&relevance1=fName&strSearch2=&relevance2=fName&strSearch3=&relevance3=fName&lscore=&hscore=&ftype=Any&fzipcode=Any&rcritical=Any&sMonth={smonth}&sDay={sday}&sYear={syear}&eMonth={emonth}&eDay={eday}&eYear={eyear}&func=Search"
+        url = url.format(start=page_start,smonth=start_date.month,sday=start_date.day,syear=start_date.year,
+                         emonth=end_date.month,eday=end_date.day,eyear=end_date.year)
         response = requests.get(url)
         number_of_violations = -1
 
@@ -52,7 +67,6 @@ if __name__ == '__main__':
     # get a list of violations from yesterday and post to Twitter
     start_date = date.today() - timedelta(days=1)
     end_date = date.today()
-    violations = get_violations(smonth=start_date.month,sday=start_date.day,syear=start_date.year,
-                                          emonth=end_date.month,eday=end_date.day,eyear=end_date.year)
+    violations = get_violations(start_date, end_date)
 
     print(violations) #post next
