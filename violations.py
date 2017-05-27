@@ -3,6 +3,10 @@ from datetime import date, timedelta, datetime
 import requests
 
 def get_violations(smonth, sday, syear, emonth, eday, eyear):
+    """
+    Takes integers of start: month, day, year AND end: month, day, year
+    and returns a list of violations for the period.
+    """
     more_results = True
     page_start = 1 #The API starts at one and returns 4 items per page.
     return_violations = []
@@ -45,11 +49,10 @@ def get_violations(smonth, sday, syear, emonth, eday, eyear):
 
 
 if __name__ == '__main__':
+    # get a list of violations from yesterday and post to Twitter
     start_date = date.today() - timedelta(days=1)
     end_date = date.today()
-#    violations = get_violations(smonth=start_date.month,sday=start_date.day,syear=start_date.year,
-#                                          emonth=end_date.month,eday=end_date.day,eyear=end_date.year)
+    violations = get_violations(smonth=start_date.month,sday=start_date.day,syear=start_date.year,
+                                          emonth=end_date.month,eday=end_date.day,eyear=end_date.year)
 
-    violations = get_violations(smonth=1,sday=1,syear=2017,
-                                          emonth=1,eday=3,eyear=2017)
-    print(violations)
+    print(violations) #post next
