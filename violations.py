@@ -74,9 +74,8 @@ def get_violations(start_date, end_date):
 
 if __name__ == '__main__':
     # get a list of violations from yesterday and post to Twitter
-    start_date = date.today() - timedelta(days=1)
-    end_date = date.today()
-    violations = get_violations(start_date, end_date)
+    run_date = date.today()
+    violations = get_violations(run_date, run_date)
 
     if len(violations) > 0:
         config = ConfigParser()
@@ -85,9 +84,9 @@ if __name__ == '__main__':
         auth.set_access_token(config['twitter']['access_token'], config['twitter']['access_token_secret'])
         api = tweepy.API(auth, retry_count=3, wait_on_rate_limit=True, wait_on_rate_limit_notify=True)
 
-        parent_tweet = api.update_status(status="Violations posted on {mm}/{dd} {yyyy}".format(mm=end_date.month,
-                                                                                               dd=end_date.day,
-                                                                                               yyyy=end_date.year))
+        parent_tweet = api.update_status(status="Violations posted on {mm}/{dd} {yyyy}".format(mm=run_date.month,
+                                                                                               dd=run_date.day,
+                                                                                               yyyy=run_date.year))
 
         for violation in violations:
             if "pool" not in violation["location_name"].lower():
