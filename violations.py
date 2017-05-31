@@ -7,8 +7,10 @@ Todo:
 """
 
 from bs4 import BeautifulSoup
+from configparser import ConfigParser
 from datetime import date, timedelta, datetime
 import requests
+import tweepy
 
 def get_violations(start_date, end_date):
     """
@@ -50,6 +52,8 @@ def get_violations(start_date, end_date):
                 for viol in violations:
                     anchor_tag = viol.find('a', class_='body')
                     if anchor_tag != None:
+                        location_name = anchor_tag.text
+                        href = anchor_tag['href'].replace("facilities.cfm", "http://wake-nc.healthinspections.us/facilities.cfm")
                         cells = viol.findChildren('td')
                         for cell in cells:
                             if "Location:" in cell.text:
@@ -57,7 +61,10 @@ def get_violations(start_date, end_date):
                                 end = cell.text.index('\nFacility Type:')
                                 location = cell.text[start:end]
                                 break
-                        return_violations.append({'name-anchor-tag': anchor_tag, 'location': location})
+                        location_address = location.replace("Location:", "")
+                        return_violations.append({'href': href,
+                                                  'location_name': location_name,
+                                                  'location_address': location_address})
                 if len(return_violations) == number_of_violations:
                     more_results = False
     return return_violations
@@ -69,4 +76,36 @@ if __name__ == '__main__':
     end_date = date.today()
     violations = get_violations(start_date, end_date)
 
-    print(violations) #post next
+    if len(violations) > 0:
+        config = ConfigParser()
+        config.read("config.ini")
+        auth = tweepy.OAuthHandler(config['twitter']['consumer_key'], config['twitter']['consumer_secret'])
+        auth.set_access_token(config['twitter']['access_token'], config['twitter']['access_token_secret'])
+        api = tweepy.API(auth, retry_count=3, wait_on_rate_limit=True, wait_on_rate_limit_notify=True)
+
+        parent_tweet = api.update_status(status="Violations posted on {mm}/{dd} {yyyy}".format(mm=end_date.month,
+                                                                                               dd=end_date.day,
+                                                                                               yyyy=end_date.year))
+
+        for violation in violations:
+
+            if "pool" not in violation["location_name"].lower():
+                hash_tags = "#wakecounty #foodsafety"
+            else:
+                hash_tags = "#wakecounty #swimmingpool"
+
+            status_text = "{name}, {addr} {href} {hash}".format(name=violation['location_name'],
+                                                                          addr=violation['location_address'],
+                                                                           href=violation['href'],
+                                                                           hash=hash_tags)
+            if len(status_text) <= 140: #api is not auto-shrinking URLs
+                api.update_status(status=status_text,
+                                  in_reply_to_status_id = parent_tweet.id)
+            else:
+                status_text = "{name}, {addr} {hash}".format(name=violation['location_name'],
+                                                                    addr=violation['location_address'],
+                                                                    hash=hash_tags)
+                tweet = api.update_status(status=status_text,
+                                  in_reply_to_status_id = parent_tweet.id)
+                api.update_status(status=violation['href'], in_reply_to_status_id=tweet.id)
+
