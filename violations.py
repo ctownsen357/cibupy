@@ -10,6 +10,8 @@ from bs4 import BeautifulSoup
 from configparser import ConfigParser
 from datetime import date, timedelta, datetime
 import requests
+from random import randint
+import time
 import tweepy
 
 def get_violations(start_date, end_date):
@@ -88,7 +90,6 @@ if __name__ == '__main__':
                                                                                                yyyy=end_date.year))
 
         for violation in violations:
-
             if "pool" not in violation["location_name"].lower():
                 hash_tags = "#wakecounty #foodsafety"
             else:
@@ -109,3 +110,4 @@ if __name__ == '__main__':
                                   in_reply_to_status_id = parent_tweet.id)
                 api.update_status(status=violation['href'], in_reply_to_status_id=tweet.id)
 
+            time.sleep(randint(1,30)) #spacing out the tweets so they aren't completely annoying
